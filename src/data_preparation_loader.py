@@ -12,11 +12,14 @@ processed_posters_folder = r"../dataset/filtered_dataset/processed_posters/"
 # Load metadata
 metadata = pd.read_csv(metadata_path)
 
-# Encode labels
+# Extract all unique genres from the metadata
+all_genres = set()
+metadata['genres'].apply(lambda x: all_genres.update(eval(x))) 
+genre_list = sorted(list(all_genres))
+
 # Multi-hot encode genres
-genre_list = ['Action', 'Drama', 'Comedy', 'Thriller']  # Only have these for testing, add more genres for full training.
 metadata['genre_labels'] = metadata['genres'].apply(
-    lambda x: [1 if genre in x else 0 for genre in genre_list]
+    lambda x: [1 if genre in eval(x) else 0 for genre in genre_list]
 )
 
 # Map decades to integers
@@ -55,3 +58,5 @@ val_dataset = MovieDataset(val_metadata, processed_posters_folder)
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+print("Extracted Genres:", genre_list)
