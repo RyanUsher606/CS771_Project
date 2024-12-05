@@ -1,0 +1,8 @@
+training:
+  batch_size: 32
+  learning_rate: 0.01
+  epochs: 50
+
+paths:
+  metadata: "../dataset/filtered_dataset/filtered_movies_metadata.csv"
+  processed_posters: "../dataset/filtered_dataset/processed_posters/"
