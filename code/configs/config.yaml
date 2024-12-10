@@ -1,0 +1,15 @@
+paths:
+  posters_folder: "{BASE_DIR}/../../dataset/filtered_dataset/posters"
+  processed_posters_folder: "{BASE_DIR}/../../dataset/filtered_dataset/processed_posters"
+  metadata_input: "{BASE_DIR}/../../dataset/unfiltered_dataset/movies_metadata.csv"
+  metadata_output: "{BASE_DIR}/../../dataset/filtered_dataset/filtered_movies_metadata.csv"
+  kaggle_api_key_path: "C:/Users/ryanu/.kaggle/kaggle.json"
+  download_path: "{BASE_DIR}/../../dataset/unfiltered_dataset"
+
+
+tmdb:
+  base_url: "https://image.tmdb.org/t/p/w500"
+  api_key: "6246a2551e31257416ba93d40906c67a"
+
+kaggle:
+  dataset_name: "rounakbanik/the-movies-dataset"

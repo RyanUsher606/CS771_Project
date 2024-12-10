@@ -1,0 +1,18 @@
+paths:
+  metadata_path: "{BASE_DIR}/../../dataset/filtered_dataset/filtered_movies_metadata.csv"
+  processed_posters_folder: "{BASE_DIR}/../../dataset/filtered_dataset/processed_posters"
+  logs: "{BASE_DIR}/../../logs"
+  models: "{BASE_DIR}/../../model_checkpoints"
+
+model:        
+  freeze_backbone: false           # Freeze backbone during initial training
+
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  num_epochs: 100
+  
+data_split:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
