@@ -8,11 +8,12 @@ from tqdm import tqdm  # For progress bar
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter  # TensorBoard for metrics
-from src.models.model import VGGGenreConvHead
+from src.models.vgg_model import VGGMultiLabel
 from src.data.movie_dataset import MovieDataset, split_metadata
 from src.config import load_config
+from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import f1_score
 import numpy as np
 
@@ -48,16 +49,53 @@ def train_model(config_path):
     train_dataset, val_dataset, _, genre_list = split_metadata(
         metadata_path, processed_folder, train_split, val_split, test_split
     )
-
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # DataLoader setup
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    # Flatten the multi-hot encoded genre labels to calculate class frequencies
+    all_labels = []
+    for _, row in train_dataset.metadata.iterrows():
+        all_labels.extend([genre for genre in row['Genre'].split('|')])
+
+    # Calculate class frequencies
+    unique_labels, label_counts = np.unique(all_labels, return_counts=True)
+
+    # Calculate class weights based on frequencies (inverse frequency)
+    class_weights = compute_class_weight('balanced', classes=unique_labels, y=all_labels)
+
+    # Convert class weights to tensor
+    class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+
+    # Move class_weights to CPU for NumPy conversion
+    class_weights_cpu = class_weights.cpu()
+
+    # Debug: Print genre_list and class_weights to inspect their contents
+    print(f"genre_list: {genre_list}")
+    print(f"class_weights_cpu: {class_weights_cpu}")
+
+    # Weighted sampler
+    samples_weight = []
+    for _, row in train_dataset.metadata.iterrows():
+        weight_sum = 0
+        for genre in row['Genre'].split('|'):
+            if genre in genre_list:  # Ensure genre exists in genre_list
+                genre_index = genre_list.index(genre)
+                weight_sum += class_weights_cpu[genre_index].item()  # Retrieve the weight using the genre index
+            else:
+                print(f"Warning: Genre '{genre}' not found in genre_list! Skipping this genre.")
+        samples_weight.append(weight_sum)
+
+    samples_weight = torch.from_numpy(np.array(samples_weight)).to(device)
+
+    sampler = WeightedRandomSampler(samples_weight, num_samples=len(samples_weight), replacement=True)
+
+    # DataLoader with sampler
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     # Model setup
     num_classes = len(genre_list)
-    model = VGGGenreConvHead(num_genres=num_classes)
+    model = VGGMultiLabel(num_classes=num_classes)
 
     # Freeze backbone if specified
     if config["model"]["freeze_backbone"]:
@@ -67,8 +105,8 @@ def train_model(config_path):
     # Move model to GPU if available
     model.to(device)
 
-    # Loss function
-    criterion = nn.BCEWithLogitsLoss()  # Using BCEWithLogitsLoss without class weights
+    # Loss function with class weights
+    criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights)  # Use BCEWithLogitsLoss for better stability
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Learning rate scheduler

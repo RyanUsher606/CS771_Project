@@ -97,3 +97,5 @@ class MovieDataset(Dataset):
             raise ValueError(f"Poster file not found for ID: {movie_id}")
 
         return image, genres
+    
+    
