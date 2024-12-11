@@ -1,0 +1,26 @@
+paths:
+  metadata_path: "{BASE_DIR}/../../dataset/filtered_dataset/filtered_movies_metadata.csv"
+  processed_posters_folder: "{BASE_DIR}/../../dataset/filtered_dataset/processed_posters"
+  logs: "{BASE_DIR}/../../logs"
+  models: "{BASE_DIR}/../../models"
+
+model:        
+  freeze_backbone: false           # Freeze backbone during initial training
+
+training:
+  batch_size: 32                  # Batch size for training
+  learning_rate: 0.001             # Initial learning rate
+  warmup_epochs: 5                 # Number of warmup epochs
+  num_epochs: 50                   # Total number of epochs
+  max_lr: 0.01                     # Maximum learning rate for scheduler
+  
+data_split:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+
+testing:
+  batch_size: 32
+  checkpoint_name: "vgg_model_epoch50_loss0.1880.pth"
+  save_predictions: true
+  save_csv: true
